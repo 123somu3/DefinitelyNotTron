@@ -1,50 +1,48 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
-public class Example : MonoBehaviour
+public class CharacterMovement : MonoBehaviour
 {
-    private CharacterController controller;
-    private Vector3 playerVelocity;
-    private bool groundedPlayer;
-    private float playerSpeed = 3.0f;
-    private float jumpHeight = 2.0f;
-    private float gravityValue = -9.81f;
+    public CharacterController controller;
 
-    private void Start()
-    {
-        controller = gameObject.AddComponent<CharacterController>();
-    }
+    public float speed = 6f;
+    public float gravity = -9.81f;
+    public float jumpHeight = 2f;
+
+    private Vector3 velocity;
+    private bool isGrounded;
+
+    public Transform groundCheck;
+    public float groundDistance = 0.4f;
+    public LayerMask groundMask;
 
     void Update()
     {
-        groundedPlayer = controller.isGrounded;
-        if (groundedPlayer && playerVelocity.y < 0)
+        // Ground check
+        isGrounded = Physics.CheckSphere(groundCheck.position, groundDistance, groundMask);
+
+        if (isGrounded && velocity.y < 0)
         {
-            playerVelocity.y = 0f;
+            velocity.y = -2f; // Reset velocity if grounded
         }
 
-        Vector3 move = new Vector3(Input.GetAxis("Horizontal"), 0, Input.GetAxis("Vertical"));
-        controller.Move(move * Time.deltaTime * playerSpeed);
+        // Get input from the player
+        float horizontal = Input.GetAxis("Horizontal");
+        float vertical = Input.GetAxis("Vertical");
+        Vector3 move = transform.right * horizontal + transform.forward * vertical;
 
-        if (move != Vector3.zero)
+        // Move the character
+        controller.Move(move * speed * Time.deltaTime);
+
+        // Jump logic
+        if (Input.GetButtonDown("Jump") && isGrounded)
         {
-            gameObject.transform.forward = move;
+            velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
         }
 
-        
-        
-    }
+        // Apply gravity
+        velocity.y += gravity * Time.deltaTime;
 
-
-    void Jump()
-    {
-        if (Input.GetButtonDown("Jump") && groundedPlayer)
-        {
-            playerVelocity.y += Mathf.Sqrt(jumpHeight * -3.0f * gravityValue);
-        }
-
-        playerVelocity.y += gravityValue * Time.deltaTime;
-        controller.Move(playerVelocity * Time.deltaTime);
+        // Move the character downward based on gravity
+        controller.Move(velocity * Time.deltaTime);
     }
 }
